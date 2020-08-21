@@ -6,18 +6,18 @@ This is a free to use source code of a string implementation of the *Standart Te
 This implementation does not use fast-string optimization. Every allocation is being set/(or read) from the heap. 
 
 
-The few things i would like to optimize/ make safer are :
-  1.Change raw pointers to smart pointers.
-  2.Make it more user friendly
-  3.Reduce amount of functions used by using template functions.
-  4.Adjust the "getcapacity()" function to make bigger jumps between capacity sizes.
-  5.Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/
-  6.Optimize functions, if possible.
+The few things i would like to optimize/ make safer are : <br>
+  1.Change raw pointers to smart pointers.  <br>
+  2.Make it more user friendly.  <br>
+  3.Reduce amount of functions used by using template functions. <br>  
+  4.Adjust the "getcapacity()" function to make bigger jumps between capacity sizes. <br>
+  5.Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/ <br>
+  6.Optimize functions, if possible. <br>
 
 
-  #Side Notes :
+  #Side Notes : <br>
   *The reason i made this project is because i thought it would be challenging enough and that i would learn
- more about the way the STL is made and optimized.* 
+ more about the way the STL is made and optimized.*  <br>
 
 
   *I would like to clarify that i have not used STL as guide on how to write the functions and code. The only
