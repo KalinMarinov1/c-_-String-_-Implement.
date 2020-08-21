@@ -2,16 +2,17 @@
 
 This is a free to use source code of a string implementation of the *Standart Template Library*
 
+
 This implementation does not use fast-string optimization. Every allocation is being set/(or read) from the heap. 
 
 
 The few things i would like to optimize/ make safer are :
- -change raw pointers to smart pointers.
- -Make it more user friendly
- -Reduce amount of functions used by using template functions.
- -Adjust the "getcapacity()" function to make bigger jumps between capacity sizes.
- -Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/
- -optimize functions, if possible.
+  1.change raw pointers to smart pointers.
+  2.Make it more user friendly
+  3.Reduce amount of functions used by using template functions.
+  4.Adjust the "getcapacity()" function to make bigger jumps between capacity sizes.
+  5.Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/
+  6.optimize functions, if possible.
 
 
   The reason i made this project is because i thought it would be challenging enough and that i would learn
