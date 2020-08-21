@@ -15,8 +15,9 @@ The few things i would like to optimize/ make safer are :
   6.Optimize functions, if possible.
 
 
-  The reason i made this project is because i thought it would be challenging enough and that i would learn
- more about the way the STL is made and optimized. 
+  #Side Notes :
+  *The reason i made this project is because i thought it would be challenging enough and that i would learn
+ more about the way the STL is made and optimized.* 
 
 
   *I would like to clarify that i have not used STL as guide on how to write the functions and code. The only
