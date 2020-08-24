@@ -1,4 +1,4 @@
-#include "kstring.h"
+#include "kstring_h.h"
 
 namespace kalin {
     size_t stringlength(const char *s) {
@@ -15,7 +15,7 @@ namespace kalin {
 
     size_t getcapacity(size_t stringsize, size_t currentcapacity) {
         while (stringsize > currentcapacity)
-            currentcapacity = currentcapacity + Lengthunder15;
+            currentcapacity <<= 1;                                     //multiply by 2
 
         return currentcapacity;
     }
@@ -24,10 +24,10 @@ namespace kalin {
 
 
 
-    Kstring::Kstring() : strsize_{0}, currentcapacity_{Lengthunder15}, ptrtoarr_{nullptr} {}
+    Kstring::Kstring() : strsize_{0}, currentcapacity_{_defaultsize}, ptrtoarr_{nullptr} {}
 
 
-    Kstring::Kstring(const char *text) : strsize_{stringlength(text)}, currentcapacity_{Lengthunder15},
+    Kstring::Kstring(const char *text) : strsize_{stringlength(text)}, currentcapacity_{_defaultsize},
                                          ptrtoarr_{nullptr} {
         currentcapacity_ = getcapacity(strsize_, currentcapacity_);
         ptrtoarr_ = new char[currentcapacity_];
@@ -41,23 +41,21 @@ namespace kalin {
     }
 
 
-    Kstring::Kstring(char text) : strsize_{1}, currentcapacity_{Lengthunder15} {
+    Kstring::Kstring(char text) : strsize_{1}, currentcapacity_{_defaultsize} {
         ptrtoarr_ = new char[currentcapacity_];
         *ptrtoarr_ = text;
     }
 
 
-    Kstring::Kstring(Kstring &&s) noexcept: strsize_(s.strsize_), currentcapacity_(s.currentcapacity_),
-                                            ptrtoarr_(nullptr) {
-        ptrtoarr_ = s.ptrtoarr_;
+    Kstring::Kstring(Kstring &&s) noexcept: strsize_(s.strsize_), currentcapacity_(s.currentcapacity_),ptrtoarr_(s.ptrtoarr_) {
         s.ptrtoarr_ = nullptr;
+        s.strsize_ = 0;
+        s.currentcapacity_ = 0;
     }
 
 
     Kstring::~Kstring() {
-            delete[] ptrtoarr_;
-            currentcapacity_ = 0;
-            strsize_ = 0;
+        delete[] ptrtoarr_;
     }
 
 
@@ -72,7 +70,7 @@ namespace kalin {
 
     int Kstring::compare(const char *str1, const char *str2) {
         if (str1 == nullptr || str2 == nullptr)
-            throw std::bad_alloc();
+            return str1 == nullptr ? -1 : 1;          //if str1 is null, then str2 is bigger, else str1 is bigger
 
         size_t iterator = 0;
 
@@ -132,9 +130,11 @@ namespace kalin {
 
 
     void Kstring::clear() noexcept {           //have to have a length of 0 .
-        std::memset(ptrtoarr_, 0, currentcapacity_ - 1);
-        strsize_ = 0;
+        char* temp = new char[currentcapacity_];
         currentcapacity_ = 15;
+        strsize_ = 0;
+        std::swap(ptrtoarr_,temp);
+        delete[] temp;
     }
 
 
@@ -150,6 +150,7 @@ namespace kalin {
             return ptrtoarr_[strsize_ - 1];
         throw std::range_error("There are no elements in the string");
     }
+
 
     char &Kstring::front() {
         if (strsize_ != 0)
@@ -181,7 +182,7 @@ namespace kalin {
 
 
     bool Kstring::find(const Kstring &rhs) const {
-        if (strsize_ < rhs.strsize_)              //early exit if searched string is bigger
+        if (strsize_ < rhs.strsize_)              //early return if searched string is bigger
             return false;
 
         return find(rhs.ptrtoarr_);
@@ -260,7 +261,7 @@ namespace kalin {
 
 
     Kstring &Kstring::insert(size_t pos, const char *rhs) {
-        --pos;   //set it accordingly to array style numeration.
+        --pos;                                                             //set it accordingly to array style numeration.
 
         if (pos > strsize_ || pos < 1)                                     //if bad range.
             throw std::range_error("Trying to insert out of the string");
@@ -269,11 +270,10 @@ namespace kalin {
         if (rhssize + strsize_ >= currentcapacity_)                       //if new allocation is needed
             throw std::out_of_range("The inserted string is too big");
 
-        if (pos == strsize_)                           //if insert at the end.
+        if (pos == strsize_-1)                           //if insert at the end.
             return (*this = assign(rhs));
 
-        char *temp = new char[strsize_ -
-                              pos];                      //string which will take the right part of pre-inserted str.
+        char *temp = new char[strsize_ -pos];                               //string which will take the right part of pre-inserted str.
         std::memcpy(temp, ptrtoarr_ + pos, sizeof(char) * strsize_ - pos);
         std::memcpy(ptrtoarr_ + pos, rhs, sizeof(char) * rhssize);
         std::memcpy(ptrtoarr_ + pos + rhssize, temp, sizeof(char) * strsize_ - pos);
@@ -321,9 +321,9 @@ namespace kalin {
             delete[] ptrtoarr_;
 
         strsize_ = 1;
-        ptrtoarr_ = new char[Lengthunder15];
+        ptrtoarr_ = new char[_defaultsize];
         *ptrtoarr_ = rhs;
-        currentcapacity_ = Lengthunder15;
+        currentcapacity_ = _defaultsize;
         return *this;
     }
 
@@ -372,13 +372,13 @@ namespace kalin {
 
         if (appropriate_capacity > currentcapacity_) {
             currentcapacity_ = appropriate_capacity;
-            char *temp = new char[currentcapacity_ + 1];
+            char *temp = new char[currentcapacity_];
             std::memcpy(temp, ptrtoarr_, strsize_ * sizeof(char));
             std::swap(ptrtoarr_, temp);
             delete[] temp;
         }
 
-        std::memcpy(ptrtoarr_ + (strsize_ * sizeof(char)), rhs, rhssize + 1);
+        std::memcpy(ptrtoarr_ + (strsize_ * sizeof(char)), rhs, rhssize);
         strsize_ += rhssize;
 
         return *this;
@@ -386,25 +386,34 @@ namespace kalin {
 
 
     Kstring &Kstring::operator+=(char rhs) {
-        return *this = Kstring::operator+=(&rhs);
+        if (strsize_ +1 < currentcapacity_)
+            std::memcpy(ptrtoarr_+strsize_,&rhs,1);
+        else {
+            currentcapacity_ <<= 1;                                   //2x current size only for a rhs char.
+            char* temp = new char[currentcapacity_];
+            std::memcpy(temp,ptrtoarr_,strsize_);                     //add previous string
+            std::memcpy(temp+strsize_,&rhs,1);               //add rhs char.
+            std::swap(temp,ptrtoarr_);
+            delete [] temp;
+        }
+        ++strsize_;
+        return *this;
     }
 
 
     Kstring &Kstring::operator+=(const Kstring &rhs) {
-        size_t OldSize = strsize_;
-        strsize_ = strsize_ + rhs.strsize_;
-
-        if (strsize_ < currentcapacity_)
-            std::memcpy((ptrtoarr_ + OldSize), rhs.ptrtoarr_, sizeof(char) * rhs.strsize_);
+        if (strsize_ +rhs.strsize_ < currentcapacity_)
+            std::memcpy(ptrtoarr_+strsize_,rhs.ptrtoarr_,rhs.strsize_);
 
         else {
-            currentcapacity_ = getcapacity(strsize_, currentcapacity_);
-            char *temp = new char[currentcapacity_];
-            std::memcpy(temp, ptrtoarr_, strsize_);
-            delete[] ptrtoarr_;
-            ptrtoarr_ = temp;
-            std::memcpy(ptrtoarr_ + OldSize, rhs.ptrtoarr_, rhs.strsize_);
+           currentcapacity_ = getcapacity(strsize_+rhs.strsize_,currentcapacity_);
+           char* temp = new char[currentcapacity_];
+           std::memcpy(temp,ptrtoarr_,strsize_);
+           std::memcpy(temp + strsize_,rhs.ptrtoarr_,rhs.strsize_);
+           std::swap(temp,ptrtoarr_);
+           delete [] temp;
         }
+        strsize_ +=rhs.strsize_;
         return *this;
     }
 
@@ -456,51 +465,31 @@ namespace kalin {
     }
 
 
-    bool operator==(const Kstring &lhs, const Kstring &rhs) noexcept {
-        if (lhs.strsize_ != rhs.strsize_)
-            return false;
-
-        return Kstring::compare(lhs.ptrtoarr_, rhs.ptrtoarr_) == 0;         //compare characters
-    }
-
-
-    bool operator==(const Kstring &lhs, const char *rhs) noexcept {
+    bool operator==(const Kstring &lhs, const char *rhs) noexcept {      //if that's noexcept i have to change the function to not throw excepts.
         if (lhs.strsize_ != stringlength(rhs))
             return false;
 
         return (Kstring::compare(lhs.ptrtoarr_, rhs) == 0);
+    }
+
+
+    bool operator==(const Kstring &lhs, const Kstring &rhs) noexcept {
+        return (lhs.ptrtoarr_ == rhs.ptrtoarr_);
     }
 
 
     bool operator==(const Kstring &lhs, char rhs) noexcept {
-        if (lhs.strsize_ != 1)
-            return false;
-        else
-            return *lhs.ptrtoarr_ == rhs;
+        return (lhs.ptrtoarr_ == &rhs);
     }
 
 
     bool operator==(const char *rhs, const Kstring &lhs) noexcept {
-        if (lhs.strsize_ != stringlength(rhs))
-            return false;
-
-        return (Kstring::compare(lhs.ptrtoarr_, rhs) == 0);
+        return (rhs == lhs.ptrtoarr_);
     }
 
 
     bool operator==(char rhs, const Kstring &lhs) noexcept {
-        if (lhs.strsize_ != 1)
-            return false;
-        else
-            return *lhs.ptrtoarr_ == rhs;
-    }
-
-
-    bool operator!=(const Kstring &lhs, const Kstring &rhs) noexcept {
-        if (lhs.strsize_ != rhs.strsize_)
-            return true;
-
-        return (Kstring::compare(lhs.ptrtoarr_, rhs.ptrtoarr_) != 0);
+        return (*lhs.ptrtoarr_ == rhs);
     }
 
 
@@ -512,30 +501,23 @@ namespace kalin {
     }
 
 
+    bool operator!=(const Kstring &lhs, const Kstring &rhs) noexcept {
+        return (lhs.ptrtoarr_ != rhs.ptrtoarr_);
+    }
+
+
     bool operator!=(const Kstring &lhs, char rhs) noexcept {
-        if (lhs.strsize_ != 1)
-            return true;
-        return *(lhs.ptrtoarr_) != rhs;
+        return (lhs.ptrtoarr_ != &rhs);
     }
 
 
     bool operator!=(const char *rhs, const Kstring &lhs) noexcept {
-        if (lhs.strsize_ != stringlength(rhs))
-            return true;
-
-        return (Kstring::compare(lhs.ptrtoarr_, rhs) != 0);
+        return rhs != lhs.ptrtoarr_;
     }
 
 
     bool operator!=(char rhs, const Kstring &lhs) noexcept {
-        if (lhs.strsize_ != 1)                        //if it has more than 1 character,
-            return true;
-        return *(lhs.ptrtoarr_) != rhs;
-    }
-
-
-    bool operator<(const Kstring &lhs, const Kstring &rhs) {
-        return (Kstring::compare(lhs.ptrtoarr_, rhs.ptrtoarr_) == -1);
+        return (&rhs != lhs.ptrtoarr_);
     }
 
 
@@ -543,9 +525,13 @@ namespace kalin {
         return (Kstring::compare(lhs.ptrtoarr_, rhs) == -1);
     }
 
+    bool operator<(const Kstring &lhs, const Kstring &rhs) {
+        return (lhs.ptrtoarr_ < rhs.ptrtoarr_);
+    }
+
 
     bool operator<(const Kstring &lhs, char rhs) {
-        return (Kstring::compare(lhs.ptrtoarr_, &rhs) == -1);
+        return (lhs.ptrtoarr_ < (&rhs));
     }
 
 
@@ -595,16 +581,11 @@ namespace kalin {
     iterator::iterator(iterator &&rhs) noexcept: _ptr{rhs._ptr}, _idx{rhs._idx} {}
 
 
-    iterator::~iterator() {
-        _ptr = nullptr;
-        _idx = 0;
-    }
-
 
     iterator &iterator::operator=(iterator &&rhs) noexcept {
         _ptr = rhs._ptr;
         _idx = rhs._idx;
-        return (*this);
+        return *this;
     }
 
 
@@ -656,15 +637,9 @@ namespace kalin {
     const_iterator::const_iterator(const_iterator &&rhs) noexcept: _ptr{rhs._ptr}, _idx{rhs._idx} {}
 
 
-    const_iterator::~const_iterator() {
-        _ptr = nullptr;
-        _idx = 0;
-    }
-
 
     const_iterator &const_iterator::operator=(const_iterator &&rhs) noexcept {
-        _ptr = rhs._ptr;
-        _idx = rhs._idx;
+        *this = rhs;
         return *this;
     }
 
@@ -687,7 +662,7 @@ namespace kalin {
 
 
     bool const_iterator::operator!=(const const_iterator &rhs) const noexcept {
-        return ((_ptr != rhs._ptr) || (_idx != rhs._idx));
+        return !(*this == rhs);
     }
 
 
@@ -705,7 +680,6 @@ namespace kalin {
         return const_iterator(this, strsize_);
     }
 
-
     using reverse_iterator = Kstring::reverse_iterator;
 
     reverse_iterator::reverse_iterator() : _ptr{nullptr}, _idx{0} {}
@@ -717,13 +691,7 @@ namespace kalin {
     reverse_iterator::reverse_iterator(reverse_iterator &&rhs) noexcept: _ptr{rhs._ptr}, _idx{rhs._idx} {}
 
 
-    reverse_iterator::~reverse_iterator() {
-        _ptr = nullptr;
-        _idx = 0;
-    }
-
-
-    reverse_iterator &reverse_iterator::operator=(reverse_iterator &&rhs) noexcept {
+    reverse_iterator& reverse_iterator::operator=(reverse_iterator &&rhs) noexcept {
         _ptr = rhs._ptr;
         _idx = rhs._idx;
         return *this;
@@ -780,17 +748,9 @@ namespace kalin {
     reverse_const_iterator::reverse_const_iterator(const Kstring *rhs, size_t pos) : _ptr{rhs}, _idx{pos} {}
 
 
-    reverse_const_iterator::reverse_const_iterator(const reverse_const_iterator &rhs) : _ptr{rhs._ptr},
-                                                                                        _idx{rhs._idx} {}
 
 
-    reverse_const_iterator::~reverse_const_iterator() {
-        _ptr = nullptr;
-        _idx = 0;
-    }
-
-
-    reverse_const_iterator &reverse_const_iterator::operator=(reverse_const_iterator &&rhs) noexcept {
+    reverse_const_iterator& reverse_const_iterator::operator=(reverse_const_iterator &&rhs) noexcept {
         _ptr = rhs._ptr;
         _idx = rhs._idx;
         return *this;
@@ -832,16 +792,6 @@ namespace kalin {
     reverse_const_iterator Kstring::rcend() const {
         return reverse_const_iterator(this, 0);
     }
-
 }
 
-// ********************* Outer functions *********************
-
-int main() {
-    kalin::Kstring t1{"Hi to my little string project."};
-    t1.append("I hope you like the way it works and behaves.");
-    t1 += "If you find an error, please give me a feedback.";
-    std::cout << t1;
-
-}
 

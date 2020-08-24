@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/git/cpp_string_implement/kstring_cpp.cpp
+kstring_h.h
+C:/git/cpp_string_implement/kstring_h.h
+
+C:/git/cpp_string_implement/kstring_h.h
+iostream
+-
+cstring
+-
+string
+-
+
+C:/git/cpp_string_implement/string_test.cpp
+kstring_h.h
+C:/git/cpp_string_implement/kstring_h.h
+
