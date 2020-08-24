@@ -465,7 +465,7 @@ namespace kalin {
     }
 
 
-    bool operator==(const Kstring &lhs, const char *rhs) noexcept {      //if that's noexcept i have to change the function to not throw excepts.
+    bool operator==(const Kstring &lhs, const char *rhs) noexcept {
         if (lhs.strsize_ != stringlength(rhs))
             return false;
 
