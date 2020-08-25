@@ -10,9 +10,8 @@ The few things i would like to optimize/ make safer are : <br>
   1.Change raw pointers to smart pointers. <br>
   2.Make it more user friendly. <br>
   3.Reduce amount of functions used by using template functions. <br> 
-  4.Adjust the "getcapacity()" function to make bigger jumps between capacity sizes.<br>
-  5.Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/ <br>
-  6.Optimize functions, if possible. <br>
+  4.Add full list of functions that are published in : http://www.cplusplus.com/reference/string/string/ <br>
+  5.Optimize functions, if possible. <br>
 
 
   #Side Notes : <br>
